@@ -1,0 +1,23 @@
+# Add healthchecks to critical services for orchestrator awareness
+version: '3.8'
+services:
+  db:
+    image: mongo:5
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 4
+  app:
+    build: .
+    environment:
+      - DB_URI=mongodb://db:27017/trueehr
+      - API_BASE_URL=http://api:4000
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
